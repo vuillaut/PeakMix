@@ -61,6 +61,49 @@ c2ccombos near 6.866 45.922 20000 \
 
 This prints waypoint count, matches, and up to 50 closest matches with route URLs.
 
+## Run the Web UI locally
+
+Option A — Serve backend and UI together (simplest):
+
+```bash
+# 1) Create and activate a virtualenv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2) Install
+pip install -e .
+
+# 3) Start the Web UI
+c2ccombos-web
+# It serves the UI at http://127.0.0.1:8000/ui
+```
+
+If port 8000 is busy:
+
+```bash
+PORT=8001 c2ccombos-web
+```
+
+Open http://127.0.0.1:8000/ui (or the port you chose) in your browser.
+
+Option B — Serve the static page and point it to your local API:
+
+```bash
+# In one terminal, run the backend (as above)
+c2ccombos-web
+
+# In another terminal, serve the static UI from docs/
+python -m http.server 8080 -d docs
+# Open http://127.0.0.1:8080/?api=http://127.0.0.1:8000
+```
+
+Note: The search needs the backend running; the static page alone won’t fetch results.
+
+Tips:
+
+- Override address: `c2ccombos-web --host 0.0.0.0 --port 8001`
+- If `c2ccombos-web` isn’t found after install, refresh your shell (`hash -r` in zsh) or open a new terminal.
+
 ## Design
 
 - Core HTTP client (`C2CClient`):
