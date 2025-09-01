@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>c2ccombos - Carte</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    .panel {
+      position: absolute; top: 10px; left: 10px; z-index: 1000;
+      background: white; padding: 8px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+  .panel input, .panel select { margin: 2px 0; width: 180px; }
+  .count { font-size: 12px; color: #555; margin-top: 4px; }
+  /* Right-side list toggle and sidebar */
+  .list-toggle { position: absolute; right: 10px; top: 10px; z-index: 1100; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; box-shadow: 0 1px 4px rgba(0,0,0,.2); cursor: pointer; }
+  #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 320px; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.25); border-radius: 8px; overflow: auto; z-index: 1050; display: none; }
+  #sidebar.visible { display: block; }
+  #sidebar .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; }
+  #closeSidebar { background: transparent; border: 0; font-size: 18px; cursor: pointer; line-height: 1; }
+  #sidebar .counts { font-size: 12px; color: #555; padding: 6px 12px; }
+  #sidebar .section-title { margin: 8px 12px 4px; font-size: 13px; color: #333; }
+  #sidebar .item { padding: 6px 12px; border-bottom: 1px solid #f1f1f1; cursor: pointer; }
+  #sidebar .item:hover { background: #f6f6f6; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div>
+      <label>Longitude, Latitude</label><br/>
+      <input id="lon" type="number" step="0.0001" value="6.2753" />
+      <input id="lat" type="number" step="0.0001" value="45.7132" />
+    </div>
+    <div>
+      <label>Cotation libre (min - max)</label><br/>
+      <select id="frat_min">
+        <option value="">Toutes</option>
+        <option>3a</option>
+        <option>3b</option>
+        <option>3c</option>
+        <option>4a</option>
+        <option>4b</option>
+        <option>4c</option>
+        <option>5a</option>
+        <option>5b</option>
+        <option>5c</option>
+        <option>6a</option>
+        <option>6a+</option>
+        <option>6b</option>
+        <option>6b+</option>
+        <option>6c</option>
+        <option>6c+</option>
+        <option>7a</option>
+        <option>7a+</option>
+        <option>7b</option>
+        <option>7b+</option>
+        <option>7c</option>
+        <option>7c+</option>
+        <option>8a</option>
+        <option>8a+</option>
+        <option>8b</option>
+        <option>8b+</option>
+        <option>8c</option>
+        <option>8c+</option>
+        <option>9a</option>
+        <option>9a+</option>
+        <option>9b</option>
+        <option>9b+</option>
+        <option>9c</option>
+      </select>
+      <select id="frat_max">
+        <option value="">Toutes</option>
+        <option>3a</option>
+        <option>3b</option>
+        <option>3c</option>
+        <option>4a</option>
+        <option>4b</option>
+        <option>4c</option>
+        <option>5a</option>
+        <option>5b</option>
+        <option>5c</option>
+        <option>6a</option>
+        <option>6a+</option>
+        <option>6b</option>
+        <option>6b+</option>
+        <option>6c</option>
+        <option>6c+</option>
+        <option>7a</option>
+        <option>7a+</option>
+        <option>7b</option>
+        <option>7b+</option>
+        <option>7c</option>
+        <option>7c+</option>
+        <option>8a</option>
+        <option>8a+</option>
+        <option>8b</option>
+        <option>8b+</option>
+        <option>8c</option>
+        <option>8c+</option>
+        <option>9a</option>
+        <option>9a+</option>
+        <option>9b</option>
+        <option>9b+</option>
+        <option>9c</option>
+      </select>
+    </div>
+    <div>
+      <label>Zone (m)</label><br/>
+      <input id="box" type="number" value="20000" />
+    </div>
+    <div>
+      <label>Distance maximale (m)</label><br/>
+      <input id="maxd" type="number" value="2000" />
+    </div>
+    <div>
+      <label>Activité</label><br/>
+      <select id="act">
+        <option value="rock_climbing" selected>Escalade</option>
+        <option value="mountain_climbing">Alpinisme</option>
+        <option value="hiking">Randonnée</option>
+        <option value="skitouring">Ski de rando</option>
+        <option value="ice_climbing">Glace</option>
+        <option value="via_ferrata">Via ferrata</option>
+        <option value="snowshoeing">Raquettes</option>
+        <option value="paragliding">Parapente</option>
+        <option value="mtb">VTT</option>
+      </select>
+    </div>
+    <div>
+      <label>Type de point</label><br/>
+      <select id="wtyp">
+        <option value="paragliding_takeoff" selected>Parapente (décollage)</option>
+        <option value="summit">Sommet</option>
+        <option value="climbing_outdoor">Site d'escalade</option>
+        <option value="pass">Col</option>
+        <option value="hut">Refuge</option>
+      </select>
+    </div>
+    <div>
+      <label>Orientation (décollage)</label><br/>
+      <select id="wfac">
+        <option value="">Toutes</option>
+        <option value="N">N</option>
+        <option value="NE">NE</option>
+        <option value="E">E</option>
+        <option value="SE">SE</option>
+        <option value="S">S</option>
+        <option value="SW">SW</option>
+        <option value="W">W</option>
+        <option value="NW">NW</option>
+      </select>
+    </div>
+    <button id="go">Rechercher</button>
+    <div class="count" id="count"></div>
+  </div>
+  <div id="map"></div>
+  <button id="toggleListBtn" class="list-toggle">Liste</button>
+  <div id="sidebar">
+    <div class="header">
+      <span>Résultats</span>
+      <button id="closeSidebar" title="Fermer">×</button>
+    </div>
+    <div id="sidebarContent"></div>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Support static hosting (e.g., GitHub Pages) by allowing an external API base
+    const API_BASE = (new URLSearchParams(location.search).get('api') || (window.API_BASE_URL || '')).trim();
+    function joinUrl(base, path) {
+      if (!base) return path;
+      return base.replace(/\/$/, '') + path;
+    }
+    const map = L.map('map').setView([45.7132, 6.2753], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+  const takeoffLayer = L.layerGroup().addTo(map);
+  const routeLayer = L.layerGroup().addTo(map);
+  const takeoffMarkers = new Map();
+  const routeMarkers = new Map();
+  let lastResults = null;
+  let currentAct = null;
+
+    async function runSearch() {
+      const lon = document.getElementById('lon').value;
+      const lat = document.getElementById('lat').value;
+      const box = document.getElementById('box').value;
+      const maxd = document.getElementById('maxd').value;
+  const act = document.getElementById('act').value;
+  currentAct = act;
+  const wtyp = document.getElementById('wtyp').value;
+  const wfac = document.getElementById('wfac').value;
+  const fratMin = document.getElementById('frat_min').value;
+  const fratMax = document.getElementById('frat_max').value;
+  const url = joinUrl(API_BASE, `/api/search?lon=${lon}&lat=${lat}&box=${box}&max_distance=${maxd}&act=${encodeURIComponent(act)}&wtyp=${encodeURIComponent(wtyp)}&wfac=${encodeURIComponent(wfac)}&fratmin=${encodeURIComponent(fratMin)}&fratmax=${encodeURIComponent(fratMax)}`);
+      const res = await fetch(url, { mode: API_BASE ? 'cors' : 'same-origin' });
+      const data = await res.json();
+
+  takeoffLayer.clearLayers();
+  routeLayer.clearLayers();
+  takeoffMarkers.clear();
+  routeMarkers.clear();
+
+      (data.takeoffs || []).forEach(f => {
+        const [lng, lat] = f.geometry.coordinates;
+        const url = f.properties.url || '#';
+        const html = `Décollage : <a href=\"${url}\" target=\"_blank\" rel=\"noopener\">${f.properties.title}</a>`;
+        const m = L.circleMarker([lat, lng], { radius: 6, color: '#1976d2' }).bindPopup(html);
+        takeoffLayer.addLayer(m);
+        if (f.properties && f.properties.id != null) {
+          takeoffMarkers.set(String(f.properties.id), m);
+        }
+      });
+      (data.routes || []).forEach(f => {
+        const [lng, lat] = f.geometry.coordinates;
+        const url = f.properties.url || '#';
+        const html = `Itinéraire : <a href=\"${url}\" target=\"_blank\" rel=\"noopener\">${f.properties.title}</a>`;
+        const m = L.circleMarker([lat, lng], { radius: 4, color: '#2e7d32' }).bindPopup(html);
+        routeLayer.addLayer(m);
+        if (f.properties && f.properties.id != null) {
+          routeMarkers.set(String(f.properties.id), m);
+        }
+      });
+      document.getElementById('count').textContent = `Décollages : ${data.counts.takeoffs || 0}, Itinéraires : ${data.counts.routes || 0}`;
+
+      // Save results and render list if sidebar is open
+      lastResults = data;
+      if (document.getElementById('sidebar').classList.contains('visible')) {
+        renderList();
+      }
+
+      if (data.takeoffs && data.takeoffs.length) {
+        const coords = data.takeoffs.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
+        const bounds = L.latLngBounds(coords);
+        map.fitBounds(bounds.pad(0.3));
+      }
+    }
+
+    document.getElementById('go').addEventListener('click', runSearch);
+
+    // Click map to set lon/lat and search
+    map.on('click', (e) => {
+      const lat = e.latlng.lat.toFixed(5);
+      const lon = e.latlng.lng.toFixed(5);
+      document.getElementById('lat').value = lat;
+      document.getElementById('lon').value = lon;
+      runSearch();
+    });
+
+    // Sidebar logic
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtOrient(o) {
+      if (!o) return '';
+      if (Array.isArray(o)) return o.join(', ');
+      return String(o);
+    }
+    function renderList() {
+      const content = document.getElementById('sidebarContent');
+      const t = (lastResults && lastResults.takeoffs) ? lastResults.takeoffs : [];
+      const r = (lastResults && lastResults.routes) ? lastResults.routes : [];
+      let html = `<div class="counts">Décollages : ${t.length}, Itinéraires : ${r.length}</div>`;
+      html += '<div class="section-title">Décollages</div>';
+      html += t.map(f => {
+        const ori = fmtOrient(f.properties.orientations);
+        return `<div class=\"item\" data-type=\"waypoint\" data-id=\"${esc(f.properties.id)}\">🛫 ${esc(f.properties.title)}${ori ? ` <span class=\\"count\\">(${esc(ori)})</span>` : ''}</div>`;
+      }).join('');
+      html += '<div class="section-title">Itinéraires</div>';
+      html += r.map(f => {
+        let meta = '';
+        if (currentAct === 'rock_climbing') {
+          const free = f.properties.free || '';
+          if (free) meta = ` <span class=\\"count\\">(libre: ${esc(free)})</span>`;
+        } else if (currentAct === 'mountain_climbing') {
+          const glob = f.properties.global || '';
+          if (glob) meta = ` <span class=\\"count\\">(globale: ${esc(glob)})</span>`;
+        }
+        const link = f.properties.url ? ` <a href=\\"${esc(f.properties.url)}\\" target=\\"_blank\\" rel=\\"noopener\\">🔗</a>` : '';
+        return `<div class=\"item\" data-type=\"route\" data-id=\"${esc(f.properties.id)}\">🧗 ${esc(f.properties.title)}${meta}${link}</div>`;
+      }).join('');
+      content.innerHTML = html;
+    }
+    document.getElementById('toggleListBtn').addEventListener('click', () => {
+      const sb = document.getElementById('sidebar');
+      const show = !sb.classList.contains('visible');
+      if (show && !lastResults) {
+        // If no results yet, run an initial search
+        runSearch();
+      }
+      if (show) renderList();
+      sb.classList.toggle('visible', show);
+    });
+    document.getElementById('closeSidebar').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('visible');
+    });
+    document.getElementById('sidebar').addEventListener('click', (e) => {
+      const el = e.target.closest('.item');
+      if (!el) return;
+      const type = el.getAttribute('data-type');
+      const id = String(el.getAttribute('data-id'));
+      const marker = type === 'waypoint' ? takeoffMarkers.get(id) : routeMarkers.get(id);
+      if (marker) {
+        map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12), { animate: true });
+        marker.openPopup();
+      }
+    });
+  </script>
+  
+</body>
+</html>

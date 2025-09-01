@@ -13,6 +13,19 @@ def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", template_folder="templates")
     search = C2CSearch()
 
+    # Minimal CORS for API endpoints to support calls from static hosts (e.g., GitHub Pages)
+    @app.after_request
+    def add_cors_headers(resp):  # type: ignore[override]
+        try:
+            path = request.path or ""
+            if path.startswith("/api/"):
+                resp.headers.setdefault("Access-Control-Allow-Origin", "*")
+                resp.headers.setdefault("Access-Control-Allow-Methods", "GET, OPTIONS")
+                resp.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        except Exception:
+            pass
+        return resp
+
     @app.get("/ui")
     def ui() -> str:
         return render_template("index.html")
