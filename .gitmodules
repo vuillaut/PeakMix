@@ -1,0 +1,3 @@
+[submodule "v6_api"]
+	path = v6_api
+	url = git@github.com:c2corg/v6_api.git

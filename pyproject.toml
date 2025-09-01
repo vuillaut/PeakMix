@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "c2ccombos"
+version = "0.1.0"
+description = "Camp to Camp route and waypoint search utilities (combos)."
+readme = "README.md"
+authors = [
+  { name = "Thomas" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+  "requests>=2.31.0",
+  "pydantic>=2.6.0",
+  "flask>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vuillaut/c2ccombos"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+c2ccombos = "c2ccombos.cli:main"
+c2ccombos-web = "c2ccombos.webapp.__main__:main"
