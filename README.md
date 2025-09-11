@@ -1,9 +1,8 @@
-# c2ccombos
+# PeakMix
 
-Camp to Camp route and waypoint search utilities.
+Finding close routes and waypoints to combine mountaineering activities: (🪂 + ⛷️), (🪂 + 🏃), (🪂 + 🧗)
 
-<img width="1915" height="928" alt="c2ccombos" src="https://github.com/user-attachments/assets/f4992c0f-0cb1-4b83-a6f3-5a7efb83fff5" />
-
+<img width="1915" height="928" alt="peakmix" src="https://github.com/user-attachments/assets/f4992c0f-0cb1-4b83-a6f3-5a7efb83fff5" />
 
 
 ## Install
@@ -165,3 +164,8 @@ if __name__ == "__main__":
     for m in matches[:20]:
         print(m.distance_m, m.route.get("document_id"), m.waypoint.get("document_id"))
 ```
+
+## Future developments
+
+- [ ] connect to skitour to find ski routes
+- [ ] connect to FFVL to find takeoffs 
