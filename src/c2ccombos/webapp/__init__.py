@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from flask import Flask, jsonify, render_template, request
+from flask import redirect
 from typing import Any, Dict
 
 from ..search import C2CSearch
@@ -25,6 +26,10 @@ def create_app() -> Flask:
         except Exception:
             pass
         return resp
+
+    @app.get("/")
+    def root_redirect():
+        return redirect("/ui", code=302)
 
     @app.get("/ui")
     def ui() -> str:
