@@ -27,6 +27,15 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Ensure Flask templates/static are included in the wheel
+[tool.setuptools.package-data]
+"c2ccombos.webapp" = [
+  "templates/*.html",
+  "templates/**/*.html",
+  "static/*",
+  "static/**/*"
+]
+
 [project.scripts]
 c2ccombos = "c2ccombos.cli:main"
 c2ccombos-web = "c2ccombos.webapp.__main__:main"
