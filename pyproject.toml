@@ -39,3 +39,6 @@ where = ["src"]
 [project.scripts]
 c2ccombos = "c2ccombos.cli:main"
 c2ccombos-web = "c2ccombos.webapp.__main__:main"
+
+[tool.vercel.scripts]
+build = "pip install ."
