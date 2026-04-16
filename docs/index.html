@@ -32,6 +32,51 @@
       width: 180px;
     }
 
+    .info-wrap {
+      position: relative;
+      display: inline-block;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .info-btn {
+      width: 18px;
+      height: 18px;
+      border: 1px solid #9aa0a6;
+      border-radius: 999px;
+      background: #fff;
+      color: #444;
+      font-size: 12px;
+      line-height: 16px;
+      padding: 0;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .info-btn:hover {
+      background: #f3f6fa;
+    }
+
+    .info-pop {
+      display: none;
+      position: absolute;
+      left: 24px;
+      top: -4px;
+      width: 240px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+      padding: 8px;
+      font-size: 12px;
+      color: #2f363d;
+      z-index: 1200;
+    }
+
+    .info-pop.visible {
+      display: block;
+    }
+
     .count {
       font-size: 12px;
       color: #555;
@@ -112,11 +157,11 @@
 </head>
 
 <body>
-  <div class="panel">
+  <form class="panel" id="searchForm">
     <div>
       <label>Longitude, Latitude</label><br />
-      <input id="lon" type="number" step="0.0001" value="6.2753" />
-      <input id="lat" type="number" step="0.0001" value="45.7132" />
+      <input id="lon" type="text" inputmode="decimal" value="6.2753" />
+      <input id="lat" type="text" inputmode="decimal" value="45.7132" />
     </div>
     <div>
       <label>Cotation libre (min - max)</label><br />
@@ -192,11 +237,21 @@
       </select>
     </div>
     <div>
-      <label>Zone (m)</label><br />
+      <label>Zone (m)
+        <span class="info-wrap">
+          <button type="button" class="info-btn" aria-label="Informations sur Zone" aria-expanded="false" data-info-target="info-zone">i</button>
+          <span id="info-zone" class="info-pop" role="tooltip">Largeur de la zone de recherche autour du point central. La zone est un carre de cote Zone (en metres).</span>
+        </span>
+      </label><br />
       <input id="box" type="number" value="20000" />
     </div>
     <div>
-      <label>Distance maximale (m)</label><br />
+      <label>Distance maximale (m)
+        <span class="info-wrap">
+          <button type="button" class="info-btn" aria-label="Informations sur Distance maximale" aria-expanded="false" data-info-target="info-maxd">i</button>
+          <span id="info-maxd" class="info-pop" role="tooltip">Distance maximale autorisee entre un point (par ex. un decollage) et un itineraire pour qu'ils soient consideres comme une correspondance.</span>
+        </span>
+      </label><br />
       <input id="maxd" type="number" value="2000" />
     </div>
     <div>
@@ -237,9 +292,9 @@
         <option value="NW">NW</option>
       </select>
     </div>
-    <button id="go">Rechercher</button>
+    <button id="go" type="submit">Rechercher</button>
     <div class="count" id="count"></div>
-  </div>
+  </form>
   <div id="map"></div>
   <button id="toggleListBtn" class="list-toggle">Liste</button>
   <div id="sidebar">
@@ -270,11 +325,60 @@
     let lastResults = null;
     let currentAct = null;
 
+      function closeInfoPopovers() {
+        document.querySelectorAll('.info-pop.visible').forEach(el => el.classList.remove('visible'));
+        document.querySelectorAll('.info-btn[aria-expanded="true"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+      }
+
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.info-btn');
+        if (btn) {
+          const targetId = btn.getAttribute('data-info-target');
+          const pop = targetId ? document.getElementById(targetId) : null;
+          const open = !!(pop && pop.classList.contains('visible'));
+          closeInfoPopovers();
+          if (!open && pop) {
+            pop.classList.add('visible');
+            btn.setAttribute('aria-expanded', 'true');
+          }
+          return;
+        }
+        if (!e.target.closest('.info-wrap')) {
+          closeInfoPopovers();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeInfoPopovers();
+      });
+
+    function parseLocaleNumber(value) {
+      const normalized = String(value || '').trim().replace(',', '.');
+      const n = Number.parseFloat(normalized);
+      return Number.isFinite(n) ? n : null;
+    }
+
     async function runSearch() {
-      const lon = document.getElementById('lon').value;
-      const lat = document.getElementById('lat').value;
-      const box = document.getElementById('box').value;
-      const maxd = document.getElementById('maxd').value;
+      const lonInput = document.getElementById('lon');
+      const latInput = document.getElementById('lat');
+      const boxInput = document.getElementById('box');
+      const maxdInput = document.getElementById('maxd');
+      const lonN = parseLocaleNumber(lonInput.value);
+      const latN = parseLocaleNumber(latInput.value);
+      const boxN = parseLocaleNumber(boxInput.value);
+      const maxdN = parseLocaleNumber(maxdInput.value);
+      if (lonN === null || latN === null || boxN === null || maxdN === null) {
+        document.getElementById('count').textContent = 'Veuillez saisir des nombres valides pour longitude, latitude, zone et distance.';
+        return;
+      }
+      const lon = String(lonN);
+      const lat = String(latN);
+      const box = String(boxN);
+      const maxd = String(maxdN);
+      lonInput.value = lon;
+      latInput.value = lat;
+      boxInput.value = box;
+      maxdInput.value = maxd;
       const act = document.getElementById('act').value;
       currentAct = act;
       const wtyp = document.getElementById('wtyp').value;
@@ -322,10 +426,18 @@
         const coords = data.takeoffs.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
         const bounds = L.latLngBounds(coords);
         map.fitBounds(bounds.pad(0.3));
+      } else {
+        // Keep map movement consistent: focus searched area even with no matches.
+        const center = L.latLng(latN, lonN);
+        const searchBounds = center.toBounds(Math.max(boxN, 10));
+        map.fitBounds(searchBounds.pad(0.1));
       }
     }
 
-    document.getElementById('go').addEventListener('click', runSearch);
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      runSearch();
+    });
 
     // Click map to set lon/lat and search
     map.on('click', (e) => {
